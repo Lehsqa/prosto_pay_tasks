@@ -1,5 +1,4 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy import select
 from models.users import User
 from schemas.users import UserDTO
@@ -45,16 +44,13 @@ class UserService:
     async def get(self, user_id: int) -> UserDTO:
         async with self.async_session() as session:
             async with session.begin():
-                try:
-                    result = await session.execute(
-                        select(User).filter(User.id == user_id)
-                    )
-                    user_db = result.scalar_one_or_none()
+                result = await session.execute(
+                    select(User).filter(User.id == user_id)
+                )
+                user_db = result.scalar_one_or_none()
 
-                    if user_db:
-                        return UserDTO.model_validate(user_db)
-                except NoResultFound:
-                    raise ValueError(f"User with id {user_id} not found")
+                if user_db:
+                    return UserDTO.model_validate(user_db)
 
     async def add(self, user: UserDTO) -> UserDTO:
         user_db = User(**user.model_dump())
